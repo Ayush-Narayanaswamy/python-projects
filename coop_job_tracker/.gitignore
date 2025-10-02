@@ -1,3 +1,4 @@
-coop_applications.csv
+# Ignore all CSV files to keep data private
+*.csv
 __pycache__/
 *.pyc

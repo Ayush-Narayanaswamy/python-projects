@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+
+        .input-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .input-header i {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .input-header h2 {
+            font-size: 1.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #e0e6ed;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea::placeholder {
+            color: #a0a0a0;
+            font-style: italic;
+        }
+
+        .analyze-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        #results {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .results-header h2 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .match-percentage {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .percentage-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .percentage-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            transition: width 1s ease;
+            width: 0%;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .result-card {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-card h3 {
+            color: #333;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .result-card h3 i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .result-card ul {
+            list-style: none;
+        }
+
+        .result-card li {
+            padding: 8px 0;
+            color: #555;
+            border-bottom: 1px solid #e0e6ed;
+            transition: color 0.3s ease;
+        }
+
+        .result-card li:last-child {
+            border-bottom: none;
+        }
+
+        .result-card li:hover {
+            color: #667eea;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 3px;
+            transition: transform 0.2s ease;
+        }
+
+        .skill-tag:hover {
+            transform: scale(1.05);
+        }
+
+        .missing-skill {
+            background: #e74c3c;
+        }
+
+        .suggestion-item {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #27ae60;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .tip {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+
+        .tip i {
+            color: #f39c12;
+            margin-right: 8px;
+        }
+
+        .tips-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .tip-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 4px solid #667eea;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .tip-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .tip-card.highlight {
+            border-top-color: #e74c3c;
+            background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%);
+        }
+
+        .tip-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .tip-header i {
+            font-size: 1.5rem;
+            margin-right: 12px;
+            color: #667eea;
+        }
+
+        .tip-card.highlight .tip-header i {
+            color: #e74c3c;
+        }
+
+        .tip-header h3 {
+            font-size: 1.3rem;
+            margin: 0;
+        }
+
+        .tip-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tip-list li {
+            padding: 10px 0;
+            color: #555;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .tip-list li:last-child {
+            border-bottom: none;
+        }
+
+        .tip-list li i {
+            color: #27ae60;
+            margin-right: 12px;
+            margin-top: 2px;
+            font-size: 0.9rem;
+        }
+
+        .tip-card.highlight .tip-list li i {
+            color: #667eea;
+        }
+
+        @media (max-width: 1024px) {
+            .tips-section {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-robot"></i> AI Resume Analyzer</h1>
+            <p>Get AI-powered insights to match your resume with job opportunities</p>
+        </div>
+
+        <div class="tips-section">
+            <div class="tip-card">
+                <div class="tip-header">
+                    <i class="fas fa-file-alt"></i>
+                    <h3>Resume Tips</h3>
+                </div>
+                <ul class="tip-list">
+                    <li><i class="fas fa-check"></i> Include your full contact information and professional summary</li>
+                    <li><i class="fas fa-check"></i> List technical skills with specific versions (e.g., "Python 3.9", "React 18")</li>
+                    <li><i class="fas fa-check"></i> Use action verbs and quantify achievements (e.g., "Improved performance by 30%")</li>
+                    <li><i class="fas fa-check"></i> Include relevant projects with technologies used</li>
+                    <li><i class="fas fa-check"></i> Match keywords from job description naturally in your content</li>
+                </ul>
+            </div>
+
+            <div class="tip-card">
+                <div class="tip-header">
+                    <i class="fas fa-briefcase"></i>
+                    <h3>Job Description Tips</h3>
+                </div>
+                <ul class="tip-list">
+                    <li><i class="fas fa-check"></i> Copy the complete job posting including requirements section</li>
+                    <li><i class="fas fa-check"></i> Include both "Required" and "Preferred" qualifications</li>
+                    <li><i class="fas fa-check"></i> Don't edit or summarize - paste the full original text</li>
+                    <li><i class="fas fa-check"></i> Include company culture and role responsibilities for better matching</li>
+                    <li><i class="fas fa-check"></i> Make sure technical requirements are clearly listed</li>
+                </ul>
+            </div>
+
+            <div class="tip-card highlight">
+                <div class="tip-header">
+                    <i class="fas fa-robot"></i>
+                    <h3>AI Analysis Features</h3>
+                </div>
+                <ul class="tip-list">
+                    <li><i class="fas fa-brain"></i> Uses machine learning to find semantic similarities</li>
+                    <li><i class="fas fa-search"></i> Identifies both exact and related skill matches</li>
+                    <li><i class="fas fa-chart-line"></i> Calculates compatibility score using TF-IDF algorithm</li>
+                    <li><i class="fas fa-lightbulb"></i> Provides specific recommendations for improvement</li>
+                    <li><i class="fas fa-target"></i> Highlights missing keywords that could boost your chances</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="input-card">
+                <div class="input-header">
+                    <i class="fas fa-file-alt"></i>
+                    <h2>Your Resume</h2>
+                </div>
+                <textarea id="resume" placeholder="Paste your complete resume here...&#10;&#10;Include:&#10;• Contact information&#10;• Work experience&#10;• Skills and technologies&#10;• Education&#10;• Projects and achievements"></textarea>
+            </div>
+            
+            <div class="input-card">
+                <div class="input-header">
+                    <i class="fas fa-briefcase"></i>
+                    <h2>Job Description</h2>
+                </div>
+                <textarea id="jobDescription" placeholder="Paste the job description here...&#10;&#10;Include:&#10;• Job requirements&#10;• Required skills&#10;• Responsibilities&#10;• Preferred qualifications"></textarea>
+            </div>
+        </div>
+
+        <div class="analyze-section">
+            <button class="analyze-btn" onclick="analyzeMatch()">
+                <i class="fas fa-magic"></i> Analyze Match
+            </button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p><i class="fas fa-cog fa-spin"></i> AI is analyzing your resume... Please wait</p>
+        </div>
+
+        <div id="results">
+            <div class="results-header">
+                <h2><i class="fas fa-chart-line"></i> Analysis Results</h2>
+            </div>
+            
+            <div class="match-percentage">
+                <div class="percentage-number" id="percentageNumber">0%</div>
+                <div class="percentage-label">Compatibility Score</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="results-grid">
+                <div class="result-card">
+                    <h3><i class="fas fa-check-circle"></i> Matching Skills</h3>
+                    <div id="matchingSkillsContainer"></div>
+                </div>
+                
+                <div class="result-card">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Missing Skills</h3>
+                    <div id="missingSkillsContainer"></div>
+                </div>
+                
+                <div class="result-card">
+                    <h3><i class="fas fa-lightbulb"></i> Improvement Tips</h3>
+                    <div id="suggestionsContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeMatch() {
+            const resume = document.getElementById('resume').value.trim();
+            const jobDescription = document.getElementById('jobDescription').value.trim();
+
+            if (!resume || !jobDescription) {
+                alert('⚠️ Please provide both resume and job description');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.querySelector('.analyze-btn').disabled = true;
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ resume, job_description: jobDescription })
+                });
+
+                const data = await response.json();
+                const analysis = JSON.parse(data.analysis);
+
+                // Update match percentage with animation
+                const percentage = Math.round(analysis.percentage);
+                animatePercentage(percentage);
+
+                // Update progress bar
+                setTimeout(() => {
+                    document.getElementById('progressFill').style.width = percentage + '%';
+                }, 500);
+
+                // Update matching skills
+                const matchingContainer = document.getElementById('matchingSkillsContainer');
+                matchingContainer.innerHTML = '';
+                if (analysis.matching_skills.length > 0) {
+                    analysis.matching_skills.forEach(skill => {
+                        const tag = document.createElement('span');
+                        tag.className = 'skill-tag';
+                        tag.textContent = skill;
+                        matchingContainer.appendChild(tag);
+                    });
+                } else {
+                    matchingContainer.innerHTML = '<p style="color: #888;">No specific matches found</p>';
+                }
+
+                // Update missing skills
+                const missingContainer = document.getElementById('missingSkillsContainer');
+                missingContainer.innerHTML = '';
+                if (analysis.missing_skills.length > 0) {
+                    analysis.missing_skills.forEach(skill => {
+                        const tag = document.createElement('span');
+                        tag.className = 'skill-tag missing-skill';
+                        tag.textContent = skill;
+                        missingContainer.appendChild(tag);
+                    });
+                } else {
+                    missingContainer.innerHTML = '<p style="color: #27ae60;">✅ Great! No critical skills missing</p>';
+                }
+
+                // Update suggestions
+                const suggestionsContainer = document.getElementById('suggestionsContainer');
+                suggestionsContainer.innerHTML = '';
+                analysis.suggestions.forEach(suggestion => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.textContent = suggestion;
+                    suggestionsContainer.appendChild(div);
+                });
+
+                // Show results with animation
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                alert('❌ Error analyzing match. Please try again.');
+                console.error('Error:', error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.querySelector('.analyze-btn').disabled = false;
+            }
+        }
+
+        function animatePercentage(target) {
+            const element = document.getElementById('percentageNumber');
+            let current = 0;
+            const increment = target / 50; // 50 steps for smooth animation
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.round(current) + '%';
+            }, 30);
+        }
+
+        // Add some interactive effects
+        document.querySelectorAll('textarea').forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                if (this.value.length > 0) {
+                    this.style.borderColor = '#27ae60';
+                } else {
+                    this.style.borderColor = '#e0e6ed';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
